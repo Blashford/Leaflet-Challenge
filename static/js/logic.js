@@ -1,6 +1,6 @@
 var myMap = L.map("map", {
-    center: [40.7128, -74.0059],
-    zoom: 8
+    center: [40.7128, -115.0059],
+    zoom: 6
   });
 
 
@@ -15,32 +15,35 @@ var myMap = L.map("map", {
 
 var link = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson";
 
-var geoJson;
-
 function markerSize(magnitude) {
-    return magnitude * 500
+    return magnitude * 10000
 } 
-function colorFill(depth) {
-    if 
+
+function colorFill(depth){
+    if (depth <= 10) {
+        return "#45f200"
+    }
+    else if (depth <= 30) {
+        return "#a1f200"
+    }
+    else if (depth <= 50) {
+        return "#eff542"
+    }
+    else if (depth <= 70) {
+        return "#fccb05"
+    }
+    else if (depth <= 90) {
+        return "#f58607"
+    }
+    else {
+        return "#ff0808"
+    }
 }
+
 d3.json(link).then(function(data){
     console.log(data)
     
-    geojson = L.choropleth(data, {
-        // Define what  property in the features to use
-        // valueProperty: `${geometry[coordinates][2]}`,
-        // // Set color scale
-        // scale: ["#ffffb2", "#b10026"],
-        // // Number of breaks in step range
-        // steps: 10,
-        // // q for quartile, e for equidistant, k for k-means
-        // mode: "q",
-        // style: {
-        //   // Border color
-        //   color: "#fff",
-        //   weight: 1,
-        //   fillOpacity: 0.8
-        // },
+    L.geoJson(data, {
         onEachFeature: function(feature, layer) {
         var coord = [feature.geometry.coordinates[1], feature.geometry.coordinates[0]];
         var depth = feature.geometry.coordinates[2];
@@ -48,10 +51,10 @@ d3.json(link).then(function(data){
         L.circle(coord, {
             fillOpacity:0.75,
             color: "black",
-            fillColor: "blue",
+            fillColor: colorFill(depth),
+            weight: 0.5,
             radius: markerSize(magnitude)
         }).addTo(myMap)
         
     }})
-        //})
 })
