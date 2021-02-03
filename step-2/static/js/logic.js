@@ -1,18 +1,3 @@
-var myMap = L.map("map", {
-    center: [40.7128, -115.0059],
-    zoom: 6
-  });
-
-
-  L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
-  attribution: "© <a href='https://www.mapbox.com/about/maps/'>Mapbox</a> © <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a> <strong><a href='https://www.mapbox.com/map-feedback/' target='_blank'>Improve this map</a></strong>",
-  tileSize: 512,
-  maxZoom: 18,
-  zoomOffset: -1,
-  id: "mapbox/streets-v11",
-  accessToken: API_KEY
-}).addTo(myMap);
-
 var link = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson";
 
 function markerSize(magnitude) {
@@ -40,12 +25,48 @@ function colorFill(depth){
     }
 }
 
-var geojson;
-
+var geojsonEarth;
+var geojsonTect;
+var tectLink = "https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_boundaries.json"
+d3.json(tectLink).then(tect => {
+    geojsonTect = L.geoJSON(tect.features)
+})
 d3.json(link).then(function(data){
     console.log(data)
+    var streetmap = L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
+        attribution: "© <a href='https://www.mapbox.com/about/maps/'>Mapbox</a> © <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a> <strong><a href='https://www.mapbox.com/map-feedback/' target='_blank'>Improve this map</a></strong>",
+        tileSize: 512,
+        maxZoom: 18,
+        zoomOffset: -1,
+        id: "mapbox/streets-v11",
+        accessToken: API_KEY
+      })
+      var darkmap = L.tileLayer("https://api.mapbox.com/styles/v1/mapbox/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
+          attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
+          maxZoom: 18,
+          id: "dark-v10",
+          accessToken: API_KEY
+      });
+    var baseMaps = {
+        "Street Map": streetmap,
+        "Dark Map": darkmap
+    }
+
+    var overlayMaps = {
+        "Tectonic Plates": geojsonTect
+    }
     
-    geojson = L.choropleth(data, {
+    var myMap = L.map("map", {
+        center: [40.7128, -115.0059],
+        zoom: 6,
+        layers:[streetmap, geojsonTect]
+      });
+      
+    var controlOverlay =   L.control.layers(baseMaps, overlayMaps, {
+        collapsed: false
+      }).addTo(myMap);
+    
+    geojsonEarth = L.choropleth(data, {
         // Define what  property in the features to use
         valueProperty: data.features[0].geometry.coordinates[2],
         // Set color scale
@@ -70,14 +91,15 @@ d3.json(link).then(function(data){
             fillColor: colorFill(depth),
             weight: 0.5,
             radius: markerSize(magnitude)
-        }).bindPopup(`<p> Magnitude: ${magnitude}</p>`).addTo(myMap)
+        }).addTo(myMap)
         
     }})
+    controlOverlay.addOverlay(geojsonEarth, "Earthquakes")
     var legend = L.control({ position: "bottomright" });
     legend.onAdd = function() {
         var div = L.DomUtil.create("div", "legend");
         var limits = [">10", "10-30", "30-50", "50-70", "70-90", "<90"];
-        var colors = geojson.options.colors;
+        var colors = geojsonEarth.options.colors;
         var labels = []
 
         limits.forEach((d, i) => {
@@ -90,4 +112,6 @@ d3.json(link).then(function(data){
 
   // Adding legend to the map
   legend.addTo(myMap);
+
+
 })
