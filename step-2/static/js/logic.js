@@ -91,7 +91,7 @@ d3.json(link).then(function(data){
             fillColor: colorFill(depth),
             weight: 0.5,
             radius: markerSize(magnitude)
-        }).addTo(myMap)
+        }).bindPopup(`<p> Magnitude: ${magnitude}</p>`).addTo(myMap)
         
     }})
     controlOverlay.addOverlay(geojsonEarth, "Earthquakes")
