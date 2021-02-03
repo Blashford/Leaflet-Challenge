@@ -40,10 +40,26 @@ function colorFill(depth){
     }
 }
 
+var geojson;
+
 d3.json(link).then(function(data){
     console.log(data)
     
-    L.geoJson(data, {
+    geojson = L.choropleth(data, {
+        // Define what  property in the features to use
+        valueProperty: data.features[0].geometry.coordinates[2],
+        // Set color scale
+        scale: ["#45f200", "#a1f200", "#eff542", "#fccb05", "#f58607", "#ff0808"],
+        // Number of breaks in step range
+        steps: 6,
+        // q for quartile, e for equidistant, k for k-means
+        mode: "q",
+        style: {
+          // Border color
+          color: "#fff",
+          weight: 1,
+          fillOpacity: 0.8
+        },
         onEachFeature: function(feature, layer) {
         var coord = [feature.geometry.coordinates[1], feature.geometry.coordinates[0]];
         var depth = feature.geometry.coordinates[2];
@@ -57,4 +73,21 @@ d3.json(link).then(function(data){
         }).bindPopup(`<p> Magnitude: ${magnitude}</p>`).addTo(myMap)
         
     }})
+    var legend = L.control({ position: "bottomright" });
+    legend.onAdd = function() {
+        var div = L.DomUtil.create("div", "info legend");
+        var limits = [">10", "10-30", "30-50", "50-70", "70-90", "<90"];
+        var colors = geojson.options.colors;
+        var labels = []
+
+        limits.forEach((d, i) => {
+            labels.push(`<li style="list-style-type: none; margin-right: 30px;"><svg width="10" height="10"><rect width="10" height="10" style="fill:${colors[i]}"/></svg> ${d}</li>`)
+        })
+
+        div.innerHTML += `<p style="text-align:center; margin-bottom: -10px"><strong>Depth</strong></p> <ul>${labels.join("")}</ul>`;
+        return div;
+    };
+
+  // Adding legend to the map
+  legend.addTo(myMap);
 })
