@@ -115,6 +115,5 @@ d3.json(tectLink).then(tect => {
 
         // Adding legend to the map
         legend.addTo(myMap);
-
     })
 })
